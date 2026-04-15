@@ -180,13 +180,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          <div className="mt-4 bg-primary-50 rounded-xl p-3 text-xs text-primary-700">
-            <p className="font-semibold mb-1">Demo accounts:</p>
-            <p>User: user@greenproducts.com / user123</p>
-            <p>Admin: admin@greenproducts.com / admin123</p>
-          </div>
-
           <p className="text-center text-sm text-gray-500 mt-5">
             Don't have an account?{" "}
             <Link
