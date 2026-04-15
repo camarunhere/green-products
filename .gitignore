@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development
+backend/.env
+frontend/.env
+frontend/.env.local
+# .env.production is committed — it only contains the public API URL (no secrets)
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage
+coverage/
+
+# Uploaded product images
+backend/uploads/
+
+# Misc
+.cache/
