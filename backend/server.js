@@ -10,9 +10,6 @@ const orderRoutes = require('./routes/orders');
 
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
@@ -21,24 +18,38 @@ const allowedOrigins = [
   'http://localhost:5175',
   'http://localhost:3000',
 ];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. curl, Postman, server-to-server)
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error(`CORS blocked for origin: ${origin}`));
   },
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
-app.use(morgan('dev'));
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
+// Ensure DB is connected before every request (cached — only connects once per instance)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('DB connection failed:', err.message);
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 
-// File upload route — only available in local dev (Vercel has a read-only filesystem)
+// File upload — local dev only (Vercel has a read-only filesystem)
 if (process.env.NODE_ENV !== 'production') {
   const uploadRoutes = require('./routes/upload');
   app.use('/api/upload', uploadRoutes);
@@ -57,10 +68,10 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error' });
+  res.status(500).json({ message: err.message || 'Internal server error' });
 });
 
-// Export app for Vercel serverless — do NOT call app.listen() in production
+// Export for Vercel serverless — do NOT listen in production
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
