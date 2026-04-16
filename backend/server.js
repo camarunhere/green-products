@@ -10,10 +10,9 @@ const orderRoutes = require('./routes/orders');
 
 const app = express();
 
-// Middleware
+// ── CORS ─────────────────────────────────────────────────────────
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow same-origin (no origin header) and localhost for dev
     if (!origin) return callback(null, true);
     if (
       origin.startsWith('http://localhost') ||
@@ -33,56 +32,69 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Ensure DB is connected before every request (cached — only connects once per instance)
+// ── PING — no DB needed, confirms function is invoked ────────────
+// Test this first: https://your-app.vercel.app/api/ping
+app.get('/api/ping', (req, res) => {
+  res.json({
+    ok: true,
+    env: process.env.NODE_ENV || 'not set',
+    mongoUriSet: !!process.env.MONGODB_URI,
+    jwtSecretSet: !!process.env.JWT_SECRET,
+    nodeVersion: process.version,
+  });
+});
+
+// ── DB middleware — runs before every API route ──────────────────
 app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
-    console.error('DB connection failed:', err.message);
-    res.status(500).json({ message: 'Database connection failed' });
+    const isUriMissing = err.message.includes('MONGODB_URI');
+    res.status(500).json({
+      message: isUriMissing
+        ? 'MONGODB_URI is not set in environment variables'
+        : `Database connection failed: ${err.message}`,
+    });
   }
 });
 
-// Routes
+// ── Routes ───────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 
-// File upload — local dev only (Vercel has a read-only filesystem)
 if (process.env.NODE_ENV !== 'production') {
   const uploadRoutes = require('./routes/upload');
   app.use('/api/upload', uploadRoutes);
 }
 
-// Health check — bypasses DB middleware, shows env + connection state
+// ── Health — requires DB (use /api/ping if DB is down) ───────────
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     env: process.env.NODE_ENV,
     mongoUriSet: !!process.env.MONGODB_URI,
     mongoState: require('mongoose').connection.readyState,
-    // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
   });
 });
 
-// 404 handler
+// ── 404 & error handlers ─────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({ message: `Route not found: ${req.method} ${req.url}` });
 });
 
-// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: err.message || 'Internal server error' });
 });
 
-// Export for Vercel serverless — do NOT listen in production
+// ── Local dev only ───────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`\n🌿 Green Products API running on http://localhost:${PORT}`);
-    console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+    console.log(`\n Green Products API running on http://localhost:${PORT}`);
+    console.log(` Environment: ${process.env.NODE_ENV || 'development'}\n`);
   });
 }
 
