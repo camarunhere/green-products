@@ -254,12 +254,19 @@ const seedDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    await User.deleteMany();
-    await Product.deleteMany();
-    console.log('Cleared existing data');
+    // Only seed if database is empty — never delete existing data
+    const existingProducts = await Product.countDocuments();
+    const existingUsers = await User.countDocuments();
+
+    if (existingProducts > 0 || existingUsers > 0) {
+      console.log(`\n⚠️  Database already has data:`);
+      console.log(`   ${existingUsers} users, ${existingProducts} products`);
+      console.log(`   Skipping seed to protect existing data.\n`);
+      process.exit(0);
+    }
 
     // Create admin
-    const admin = await User.create({
+    await User.create({
       name: 'Admin User',
       email: 'admin@greenproducts.com',
       password: 'admin123',
@@ -267,7 +274,7 @@ const seedDB = async () => {
     });
 
     // Create test user
-    const user = await User.create({
+    await User.create({
       name: 'John Eco',
       email: 'user@greenproducts.com',
       password: 'user123',
