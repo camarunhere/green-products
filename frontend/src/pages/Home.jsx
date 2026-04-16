@@ -70,7 +70,7 @@ export default function Home() {
 
   useEffect(() => {
     api.get('/products/featured').then(({ data }) => {
-      setFeatured(data);
+      setFeatured(Array.isArray(data) ? data : []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

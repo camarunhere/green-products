@@ -50,9 +50,9 @@ export default function Products() {
       if (maxPrice) params.maxPrice = maxPrice;
 
       const { data } = await api.get('/products', { params });
-      setProducts(data.products);
-      setTotal(data.total);
-      setPages(data.pages);
+      setProducts(Array.isArray(data.products) ? data.products : []);
+      setTotal(data.total || 0);
+      setPages(data.pages || 1);
     } catch (err) {
       console.error(err);
     } finally {

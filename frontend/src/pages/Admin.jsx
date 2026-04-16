@@ -88,9 +88,9 @@ export default function Admin() {
       if (categoryFilter !== 'All') params.category = categoryFilter;
       if (search) params.search = search;
       const { data } = await api.get('/products', { params });
-      setProducts(data.products);
-      setTotal(data.total);
-      setPages(data.pages);
+      setProducts(Array.isArray(data.products) ? data.products : []);
+      setTotal(data.total || 0);
+      setPages(data.pages || 1);
     } catch {
       toast.error('Failed to load products');
     } finally {

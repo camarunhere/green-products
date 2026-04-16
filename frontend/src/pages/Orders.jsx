@@ -20,7 +20,7 @@ export default function Orders() {
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
     api.get('/orders/myorders')
-      .then(({ data }) => { setOrders(data); setLoading(false); })
+      .then(({ data }) => { setOrders(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [user, navigate]);
 
