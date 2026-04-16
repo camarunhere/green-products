@@ -7,9 +7,12 @@ const connectDB = async () => {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, {
-      serverApi: { version: '1', strict: true, deprecationErrors: true },
-      bufferCommands: false,
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error('MONGODB_URI environment variable is not set');
+
+    cached.promise = mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     });
   }
 

@@ -55,9 +55,15 @@ if (process.env.NODE_ENV !== 'production') {
   app.use('/api/upload', uploadRoutes);
 }
 
-// Health check
+// Health check — bypasses DB middleware, shows env + connection state
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Green Products API is running' });
+  res.json({
+    status: 'OK',
+    env: process.env.NODE_ENV,
+    mongoUriSet: !!process.env.MONGODB_URI,
+    mongoState: require('mongoose').connection.readyState,
+    // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+  });
 });
 
 // 404 handler
